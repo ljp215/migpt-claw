@@ -8,6 +8,11 @@
     "type": "object",
     "additionalProperties": false,
     "properties": {
+      "enabled": {
+        "type": "boolean",
+        "description": "是否启用频道",
+        "default": false
+      },
       "userId": {
         "type": "string",
         "description": "小米账号 ID"
@@ -65,6 +70,56 @@
         "type": "string",
         "description": "收到消息回复文案",
         "default": "收到，处理中"
+      },
+      "debug": {
+        "type": "boolean",
+        "description": "调试模式：打印设备列表等详细日志",
+        "default": false
+      },
+      "timeout": {
+        "type": "number",
+        "description": "网络请求超时时长（毫秒）"
+      },
+      "streaming": {
+        "type": "boolean",
+        "description": "启用流式 TTS（长文本分块播放）",
+        "default": true
+      },
+      "textChunkLimit": {
+        "type": "number",
+        "description": "TTS 文本分块长度（汉字）",
+        "default": 200
+      },
+      "ttsSpeed": {
+        "type": "number",
+        "minimum": 0.5,
+        "maximum": 2,
+        "description": "TTS 语速（0.5-2.0）"
+      },
+      "volume": {
+        "type": "number",
+        "minimum": 6,
+        "maximum": 100,
+        "description": "默认音量（6-100）"
+      },
+      "defaultAccount": {
+        "type": "string",
+        "description": "默认账户 ID"
+      },
+      "devicePolicy": {
+        "type": "string",
+        "enum": ["pairing", "allowlist", "open"],
+        "description": "设备访问策略"
+      },
+      "allowFrom": {
+        "type": "array",
+        "items": { "type": ["string", "number"] },
+        "description": "允许的设备名称白名单"
+      },
+      "accounts": {
+        "type": "object",
+        "additionalProperties": { "type": "object" },
+        "description": "多账号配置：{ 账号ID: 账户配置 }，账户配置字段与顶层同构（userId/password/passToken/devices/speakerControl/ttsCommand 等），未设置的字段继承顶层"
       }
     }
   },
@@ -119,6 +174,50 @@
     "receiveMessage": {
       "label": "回复文案",
       "placeholder": "收到，处理中"
+    },
+    "enabled": {
+      "label": "启用频道",
+      "description": "是否启用小爱音箱频道"
+    },
+    "debug": {
+      "label": "调试模式",
+      "description": "启用后打印设备列表等详细日志"
+    },
+    "timeout": {
+      "label": "请求超时",
+      "placeholder": "毫秒"
+    },
+    "streaming": {
+      "label": "流式播报",
+      "description": "长文本分块播放，降低延迟"
+    },
+    "textChunkLimit": {
+      "label": "分块长度",
+      "placeholder": "200"
+    },
+    "ttsSpeed": {
+      "label": "TTS 语速",
+      "placeholder": "0.5-2.0"
+    },
+    "volume": {
+      "label": "默认音量",
+      "placeholder": "6-100"
+    },
+    "defaultAccount": {
+      "label": "默认账户",
+      "placeholder": "账户 ID"
+    },
+    "devicePolicy": {
+      "label": "设备访问策略",
+      "placeholder": "pairing / allowlist / open"
+    },
+    "allowFrom": {
+      "label": "设备白名单",
+      "placeholder": "允许的设备名称列表"
+    },
+    "accounts": {
+      "label": "多账号配置",
+      "description": "键为账号 ID，值为与顶层同构的账户配置，未设置字段继承顶层"
     }
   }
 }
