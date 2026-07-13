@@ -203,43 +203,30 @@ micli list                     # 列出账号下的设备（含 did / model）
 
 首次登录会把登录态写入 token 文件（默认 `~/.mi.token`，可用 `MI_TOKEN` 环境变量指定路径）。如果账号开启了二次验证/异地登录保护，这一步可能反复要求验证码而无法完成——此时改用方式二。
 
-### 方式二：手工构造 .mi.token 绕过登录
+### 方式二：手工构造 .mi.token 绕过账密登录
 
-如果本插件已经登录成功过，工作目录下会生成 `.mi.json` 缓存；可以直接把里面的凭证「翻译」成 MiService 的 `.mi.token` 格式，跳过 MiService 自己的账密登录（从而绕过验证码限制）。
-
-MiService 的 token 文件结构（每个服务的值为 `[ssecurity, serviceToken]`）：
+如果本插件已经登录成功过，工作目录下会生成 `.mi.json` 缓存；从中取出三个字段构造一个**最小** `.mi.token`，MiService 即可跳过账密登录（不触发验证码）：
 
 ```json
 {
-  "deviceId": "16位大写设备ID",
-  "userId": "123456789",
-  "passToken": "你的 passToken",
-  "xiaomiio": ["你的 ssecurity", "你的 serviceToken"],
-  "micoapi": ["你的 ssecurity", "你的 serviceToken"]
+  "deviceId": "<.mi.json 中的 deviceId>",
+  "userId": <你的小米数字ID>,
+  "passToken": "<.mi.json 中 pass.passToken 的完整值>"
 }
 ```
 
-- `xiaomiio`：MIoT（miio）服务，控制设备、发 TTS、查 spec 都走这个
-- `micoapi`：MiNA 服务（可选，只测 MIoT 时可不填）
-
-各字段可从本插件的 `.mi.json` 缓存中对应取出：
-
-| `.mi.token` 字段 | 取自 `.mi.json` 的 `miot`（或 `mina`）段 |
-| --- | --- |
-| `deviceId` | `deviceId` |
-| `userId` | `userId` |
-| `passToken` | `pass.passToken` |
-| `xiaomiio[0]` / `micoapi[0]`（ssecurity） | `pass.ssecurity` |
-| `xiaomiio[1]` / `micoapi[1]`（serviceToken） | `serviceToken` |
-
-> `.mi.json` 里 `miot` 段对应 `xiaomiio`、`mina` 段对应 `micoapi`；两段的 `ssecurity` / `serviceToken` 各不相同，不要混用。
-
-把构造好的文件保存为 `~/.mi.token`（或用 `MI_TOKEN` 指定路径），之后 `micli` 会直接复用这份登录态、不再触发登录：
+保存为 `~/.mi.token`（或用 `MI_TOKEN` 指定路径）后直接使用：
 
 ```bash
 export MI_TOKEN="$HOME/.mi.token"
 micli list
 ```
+
+**原理**：首次请求时 MiService 发现缺少对应服务的凭证，会带着 `passToken` cookie 调 `serviceLogin?sid=xxx`——passToken 有效则直接换到 `ssecurity`/`serviceToken`（跳过密码步骤，因此无验证码），并自动回写到 `.mi.token` 的 `xiaomiio`（MIoT）、`micoapi`（MiNA）字段。这两个字段是自动生成的缓存，**无需手工填写**。
+
+**注意**：
+- `deviceId` 请用 `.mi.json` 里的原值（passToken 与签发时的设备标识关联，随意生成可能校验失败）
+- 若 passToken 已过期，此法失效，只能回方式一重新登录
 
 ### 查询设备型号（model）
 
