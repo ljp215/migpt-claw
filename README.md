@@ -149,6 +149,82 @@ openclaw gateway restart
 
 对于不适合播报的内容，AI 会告知用户已通过其他渠道（如微信、邮件等）发送。
 
+## 使用 MiService 调试测试
+
+排查「日志显示发送成功但音箱无声」「不确定某型号 TTS 动作的 siid/aiid」等问题时，直接用 [MiService](https://github.com/yihong0618/MiService) 的 `micli` 命令单独测试小米云端接口，比反复重启网关快得多，也能与上文的 `ttsCommand` 相互印证。
+
+### 安装
+
+```bash
+pip install miservice_fork   # 安装后提供 micli 命令
+```
+
+> `micli spec <model>` 与前文 TTS 小节里的 `python3 -m miservice spec <model>` 等价，都是查询设备 spec。
+
+### 方式一：账密登录（可能触发验证码）
+
+```bash
+export MI_USER="小米ID或手机号"
+export MI_PASS="小米账号密码"
+micli list                     # 列出账号下的设备（含 did / model）
+```
+
+首次登录会把登录态写入 token 文件（默认 `~/.mi.token`，可用 `MI_TOKEN` 环境变量指定路径）。如果账号开启了二次验证/异地登录保护，这一步可能反复要求验证码而无法完成——此时改用方式二。
+
+### 方式二：手工构造 .mi.token 绕过登录
+
+如果本插件已经登录成功过，工作目录下会生成 `.mi.json` 缓存；可以直接把里面的凭证「翻译」成 MiService 的 `.mi.token` 格式，跳过 MiService 自己的账密登录（从而绕过验证码限制）。
+
+MiService 的 token 文件结构（每个服务的值为 `[ssecurity, serviceToken]`）：
+
+```json
+{
+  "deviceId": "16位大写设备ID",
+  "userId": "123456789",
+  "passToken": "你的 passToken",
+  "xiaomiio": ["你的 ssecurity", "你的 serviceToken"],
+  "micoapi": ["你的 ssecurity", "你的 serviceToken"]
+}
+```
+
+- `xiaomiio`：MIoT（miio）服务，控制设备、发 TTS、查 spec 都走这个
+- `micoapi`：MiNA 服务（可选，只测 MIoT 时可不填）
+
+各字段可从本插件的 `.mi.json` 缓存中对应取出：
+
+| `.mi.token` 字段 | 取自 `.mi.json` 的 `miot`（或 `mina`）段 |
+| --- | --- |
+| `deviceId` | `deviceId` |
+| `userId` | `userId` |
+| `passToken` | `pass.passToken` |
+| `xiaomiio[0]` / `micoapi[0]`（ssecurity） | `pass.ssecurity` |
+| `xiaomiio[1]` / `micoapi[1]`（serviceToken） | `serviceToken` |
+
+> `.mi.json` 里 `miot` 段对应 `xiaomiio`、`mina` 段对应 `micoapi`；两段的 `ssecurity` / `serviceToken` 各不相同，不要混用。
+
+把构造好的文件保存为 `~/.mi.token`（或用 `MI_TOKEN` 指定路径），之后 `micli` 会直接复用这份登录态、不再触发登录：
+
+```bash
+export MI_TOKEN="$HOME/.mi.token"
+micli list
+```
+
+### 测试 TTS 动作（验证 siid/aiid）
+
+拿到设备的 `did` 后，就能直接调用某个 siid 下的 play-text 动作让音箱说话，用来确认该型号正确的 siid：
+
+```bash
+export MI_DID="你的设备did"              # 也可直接用设备名
+micli spec xiaomi.wifispeaker.x08c      # 查看该型号全部服务/动作，找 intelligent-speaker → play-text
+micli 3-1 你好                          # 调用 siid=3, aiid=1 的动作播报（x08c 的 intelligent-speaker 在 siid=3）
+micli 5-1 你好                          # 多数老型号在 siid=5
+```
+
+- `micli <siid>-<aiid> <文本>` 与插件内部的 `MiOT.doAction(siid, aiid, [text])` 等价，可交叉验证
+- 哪个 siid 能让音箱正常出声，就把它填进插件配置的 `ttsCommand: [siid, aiid]`
+
+> ⚠️ `.mi.token` 与 `.mi.json` 都含有你的登录凭证（passToken、serviceToken 等），请勿提交到仓库或分享给他人——项目 `.gitignore` 已默认忽略这两个文件。
+
 ## 故障排查
 
 ### 登录失败

@@ -1,2 +1,6 @@
 dist/
 node_modules/
+
+# 小米登录态缓存 / MiService token（含凭证，切勿提交）
+.mi.json
+.mi.token
