@@ -79,7 +79,7 @@ openclaw plugins install ./migpt-claw-1.0.0.tgz
 插件按以下优先级确定 TTS 动作：
 
 1. **显式配置** `ttsCommand: [siid, aiid]`（最高优先级）
-2. **按型号自动探测**：启动时查询 [miot-spec.org](https://miot-spec.org) 的设备 spec，定位 `intelligent-speaker` 服务下的 `play-text` 动作（等价于 `python3 -m miservice spec <model>`）
+2. **按型号自动探测**：启动时查询 [miot-spec.org](https://miot-spec.org) 的设备 spec，定位 `intelligent-speaker` 服务下的 `play-text` 动作（插件内置实现，无需安装 Python/MiService；查询结果与 `python3 -m miservice spec <model>` 等价。设备型号由插件登录后自动获取，无需配置）
 3. **默认值** `[5, 1]`
 
 **配置示例**（x08c）：
@@ -208,6 +208,38 @@ MiService 的 token 文件结构（每个服务的值为 `[ssecurity, serviceTok
 export MI_TOKEN="$HOME/.mi.token"
 micli list
 ```
+
+### 查询设备型号（model）
+
+自动探测和 `micli spec` 都以设备型号（形如 `xiaomi.wifispeaker.x08c`）为入参，但米家 App 里不容易直接看到。两种查法：
+
+**方法一：插件 debug 日志（无需 Python）**
+
+配置 `"debug": true` 后重启网关，启动日志会打印设备信息，其中 `model` 即型号：
+
+```
+🐛 设备信息： {
+  "name": "小爱万能音箱",
+  "model": "xiaomi.wifispeaker.x08c",
+  ...
+}
+```
+
+**方法二：MiService 列出全部设备**
+
+```bash
+python3 -m miservice list full | grep -E '"(name|model|did)"'
+```
+
+在输出中按 `name` 找到自己的设备，同一段里的 `model` 即型号（`did` 供后面 `MI_DID` 使用）：
+
+```json
+"did": "636201917",
+"name": "小爱万能音箱",
+"model": "xiaomi.wifispeaker.x08c",
+```
+
+> ⚠️ `list full` 的完整输出还包含设备 token、MAC 地址、内外网 IP 等敏感信息，请勿截图或公开分享。
 
 ### 测试 TTS 动作（验证 siid/aiid）
 
