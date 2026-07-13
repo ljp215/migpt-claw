@@ -107,7 +107,7 @@ openclaw plugins install ./migpt-claw-1.0.0.tgz
 python3 scripts/find-tts-command.py --model xiaomi.wifispeaker.x08c
 
 # 只知道设备名称：脚本先查 model 再查 spec
-# （需 pip install miservice_fork，及 MI_USER/MI_PASS 环境变量或 ~/.mi.token）
+# （需 pip install miservice，及 MI_USER/MI_PASS 环境变量或 ~/.mi.token）
 python3 scripts/find-tts-command.py 客厅音箱
 ```
 
@@ -130,7 +130,7 @@ python3 scripts/find-tts-command.py 客厅音箱
 **手动查询（脚本不可用时）**：
 
 ```bash
-pip install miservice_fork
+pip install miservice
 python3 -m miservice spec xiaomi.wifispeaker.x08c
 # 在输出中找 intelligent-speaker 服务的 iid（即 siid），
 # 及其下 play-text 动作的 iid（即 aiid）
@@ -188,7 +188,7 @@ openclaw gateway restart
 ### 安装
 
 ```bash
-pip install miservice_fork   # 安装后提供 micli 命令
+pip install miservice   # 安装后提供 micli 命令
 ```
 
 > `micli spec <model>` 与前文 TTS 小节里的 `python3 -m miservice spec <model>` 等价，都是查询设备 spec。

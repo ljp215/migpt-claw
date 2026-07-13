@@ -6,7 +6,7 @@
   # 已知型号（无需登录、无需安装任何依赖）:
   python3 scripts/find-tts-command.py --model xiaomi.wifispeaker.x08c
 
-  # 只知道设备名称（需要 pip install miservice_fork 及登录凭证）:
+  # 只知道设备名称（需要 pip install miservice 及登录凭证）:
   export MI_USER="小米ID"
   export MI_PASS="账号密码"        # 或准备好 ~/.mi.token（见 README）
   python3 scripts/find-tts-command.py 客厅音箱
@@ -41,7 +41,7 @@ def find_device_by_name(device_name):
             capture_output=True, text=True, timeout=60,
         )
     except FileNotFoundError:
-        sys.exit("❌ 无法运行 miservice, 请先安装: pip install miservice_fork")
+        sys.exit("❌ 无法运行 miservice, 请先安装: pip install miservice")
 
     stdout = out.stdout or ""
     devices = None
