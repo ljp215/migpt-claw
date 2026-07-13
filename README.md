@@ -195,6 +195,7 @@ migpt-claw/
 │   │   ├── miot.ts        # MIoT API
 │   │   ├── account.ts     # 账号认证
 │   │   ├── common.ts      # 通用工具
+│   │   ├── spec.ts        # TTS 动作(siid/aiid)探测
 │   │   └── typing.ts      # 类型定义
 │   └── utils/              # 工具函数
 │       ├── http.ts        # HTTP 请求
