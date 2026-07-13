@@ -39,6 +39,13 @@
         "enum": ["mina", "miot"],
         "description": "音箱控制方式"
       },
+      "ttsCommand": {
+        "type": "array",
+        "items": { "type": "number" },
+        "minItems": 2,
+        "maxItems": 2,
+        "description": "MIoT TTS 播报动作坐标 [siid, aiid]（仅 miot 方式生效；不配置时按型号自动探测）"
+      },
       "announceOnStart": {
         "type": "boolean",
         "description": "启动时是否播报上线文案",
@@ -91,6 +98,11 @@
     "speakerControl": {
       "label": "控制方式",
       "placeholder": "mina 或 miot"
+    },
+    "ttsCommand": {
+      "label": "TTS 动作 [siid, aiid]",
+      "placeholder": "[3, 1]，留空则按型号自动探测",
+      "description": "仅 miot 控制方式生效；播报无声时按 README 用 micli 查询后填写"
     },
     "announceOnStart": {
       "label": "启动时播报",
