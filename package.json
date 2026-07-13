@@ -21,7 +21,8 @@
     "index.ts",
     "skills",
     "openclaw.plugin.json",
-    "tsconfig.json"
+    "tsconfig.json",
+    "scripts"
   ],
   "exports": {
     ".": {

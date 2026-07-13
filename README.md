@@ -66,6 +66,11 @@ openclaw plugins install ./migpt-claw-1.0.0.tgz
 - X10A（小爱音箱 X10）
 - L05B / L05C（小爱音箱 Play 增强版）
 
+**如何判断该用哪种**：没有字段能直接判断，按此顺序试即可——
+1. 先用默认 `mina`，让音箱播报一条消息
+2. 若无声或报错，切换 `"speakerControl": "miot"`，并用下文脚本查出 `ttsCommand`
+3. 若脚本提示该型号 spec 中没有 `play-text` 动作，说明 miot 方式播不了 TTS，只能用 `mina`
+
 **注意**：
 - 不同型号的小爱音箱对 `mina` 和 `miot` 的支持情况可能不同
 - 如果默认 `mina` 方式无法正常工作，请尝试切换为 `miot`
@@ -95,10 +100,37 @@ openclaw plugins install ./migpt-claw-1.0.0.tgz
 }
 ```
 
-**手动查询自己型号的 TTS 动作**：
+**一键查询脚本（推荐）**：仓库自带 [scripts/find-tts-command.py](scripts/find-tts-command.py)，运行完直接得到 `[siid, aiid]` 和可粘贴的配置片段：
 
 ```bash
-pip install miservice
+# 已知型号：无需登录、无需安装任何依赖
+python3 scripts/find-tts-command.py --model xiaomi.wifispeaker.x08c
+
+# 只知道设备名称：脚本先查 model 再查 spec
+# （需 pip install miservice_fork，及 MI_USER/MI_PASS 环境变量或 ~/.mi.token）
+python3 scripts/find-tts-command.py 客厅音箱
+```
+
+输出示例：
+
+```
+✅ 型号: xiaomi.wifispeaker.x08c
+✅ spec: urn:miot-spec-v2:device:speaker:0000A015:xiaomi-x08c:2
+
+🔊 TTS 动作: [siid, aiid] = [3, 1]
+
+在 openclaw.json 的 channels.migpt 中配置:
+
+  "speakerControl": "miot",
+  "ttsCommand": [3, 1]
+```
+
+若该型号的 spec 中没有 `play-text` 动作，脚本会提示改用 `mina` 方式。
+
+**手动查询（脚本不可用时）**：
+
+```bash
+pip install miservice_fork
 python3 -m miservice spec xiaomi.wifispeaker.x08c
 # 在输出中找 intelligent-speaker 服务的 iid（即 siid），
 # 及其下 play-text 动作的 iid（即 aiid）
