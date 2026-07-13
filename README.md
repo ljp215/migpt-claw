@@ -253,7 +253,7 @@ python3 -m miservice list full | grep -E '"(name|model|did)"'
 在输出中按 `name` 找到自己的设备，同一段里的 `model` 即型号（`did` 供后面 `MI_DID` 使用）：
 
 ```json
-"did": "636201917",
+"did": "<你的设备did>",
 "name": "小爱万能音箱",
 "model": "xiaomi.wifispeaker.x08c",
 ```
