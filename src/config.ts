@@ -128,6 +128,7 @@ export function resolveMiAccount(
     timeout: accountConfig.timeout ?? migptCfg?.timeout,
     devices: accountConfig.devices ?? migptCfg?.devices ?? [],
     speakerControl: accountConfig.speakerControl ?? migptCfg?.speakerControl,
+    ttsCommand: accountConfig.ttsCommand ?? migptCfg?.ttsCommand,
   };
 
   // 检查是否已配置

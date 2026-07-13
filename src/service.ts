@@ -3,6 +3,7 @@ import { MIoT } from './mi/miot.js';
 import { getMiService } from './mi/common.js';
 import { assert, sleep } from './utils/parse.js';
 import { Debugger } from './utils/debug.js';
+import { detectTtsCommand, DEFAULT_TTS_COMMAND, type TTSCommand } from './mi/spec.js';
 
 export interface MiServiceConfig {
   /** 小米 ID（数字） */
@@ -17,6 +18,13 @@ export interface MiServiceConfig {
   timeout?: number;
   /** 音箱控制方式：mina/miot */
   speakerControl?: 'mina' | 'miot';
+  /**
+   * MIoT TTS 播报动作坐标 [siid, aiid]。
+   * 不配置时将根据设备型号自动探测（等价于查询 miot-spec.org 的设备 spec），
+   * 探测失败则回退到默认值 [5, 1]。
+   * 例如 xiaomi.wifispeaker.x08c 应为 [3, 1]。
+   */
+  ttsCommand?: TTSCommand;
 }
 
 class _MiService {
@@ -25,6 +33,7 @@ class _MiService {
   private _initialized = false;
   private _initializing = false;
   private _speakerControl: 'mina' | 'miot' = 'mina';
+  private _ttsCommand: TTSCommand = DEFAULT_TTS_COMMAND;
 
   /**
    * 使用 MIoT 发送 TTS 播报
@@ -34,13 +43,19 @@ class _MiService {
       console.warn('⚠️ MIoT 服务不可用');
       return false;
     }
+    const [siid, aiid] = this._ttsCommand;
     try {
-      // 使用 MIoT spec 调用 TTS 动作 (siid=5, aiid=1 是常见的 TTS 动作)
-      // 不同设备可能不同，需要根据设备 spec 调整
-      const result = await this.MiOT.doAction(5, 1, [text]);
+      const result = await this.MiOT.doAction(siid, aiid, [text]);
+      if (!result) {
+        // 云端接受请求 != 设备执行成功，明确提示便于排查
+        console.error(
+          `❌ MIoT TTS 播报未生效 (siid=${siid}, aiid=${aiid})，` +
+            '该型号的 play-text 动作可能位于其他 siid，请配置 ttsCommand 或查询设备 spec',
+        );
+      }
       return result;
     } catch (e: any) {
-      console.error('❌ MIoT TTS 失败:', e?.message || e);
+      console.error(`❌ MIoT TTS 失败 (siid=${siid}, aiid=${aiid}):`, e?.message || e);
       return false;
     }
   }
@@ -154,6 +169,29 @@ class _MiService {
             2,
           ),
         );
+      }
+
+      // 解析 MIoT TTS 播报动作：配置优先，其次按型号自动探测，最后回退默认值
+      if (this._speakerControl === 'miot') {
+        const model: string | undefined = (this.MiNA?.account as any)?.device?.model;
+        if (config.ttsCommand) {
+          this._ttsCommand = config.ttsCommand;
+          console.log(`🔊 使用配置的 TTS 动作: siid=${this._ttsCommand[0]}, aiid=${this._ttsCommand[1]}`);
+        } else {
+          const detected = await detectTtsCommand(model);
+          if (detected) {
+            this._ttsCommand = detected;
+            console.log(
+              `🔊 已按型号(${model ?? '未知'})自动探测 TTS 动作: siid=${detected[0]}, aiid=${detected[1]}`,
+            );
+          } else {
+            this._ttsCommand = DEFAULT_TTS_COMMAND;
+            console.warn(
+              `⚠️ 未能探测型号(${model ?? '未知'})的 TTS 动作，使用默认值 siid=${DEFAULT_TTS_COMMAND[0]}, aiid=${DEFAULT_TTS_COMMAND[1]}；` +
+                '如播报无声，请在配置中显式指定 ttsCommand',
+            );
+          }
+        }
       }
 
       this._initialized = true;

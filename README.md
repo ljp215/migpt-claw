@@ -52,6 +52,7 @@ openclaw plugins install ./migpt-claw-1.0.0.tgz
 - `acknowledgeOnReceive`：收到消息时是否回复提示
 - `receiveMessage`：收到消息回复文案
 - `speakerControl`：音箱控制方式（`mina` 或 `miot`，默认 `mina`）
+- `ttsCommand`：MIoT TTS 播报动作坐标 `[siid, aiid]`（仅 `miot` 方式生效；不配置时自动探测，见下文）
 
 ### 音箱控制方式说明
 
@@ -70,6 +71,38 @@ openclaw plugins install ./migpt-claw-1.0.0.tgz
 - 如果默认 `mina` 方式无法正常工作，请尝试切换为 `miot`
 - 完整兼容性列表参考：[MiGPT 兼容性文档](https://github.com/idootop/mi-gpt/blob/main/docs/compatibility.md)
 - 建议自行编译测试以确定您的设备最佳配置
+
+### TTS 动作（siid/aiid）配置与自动探测
+
+`miot` 方式通过 MIoT 的 `intelligent-speaker` 服务发送 TTS 播报，但**不同型号该服务的 siid 不同**（例如多数老型号在 `siid=5`，而 `xiaomi.wifispeaker.x08c` 在 `siid=3`，其 `siid=5` 是麦克风服务）。发错 siid 时云端会静默拒绝（错误码如 `-704040005`），表现为"日志发送成功但音箱无声"。
+
+插件按以下优先级确定 TTS 动作：
+
+1. **显式配置** `ttsCommand: [siid, aiid]`（最高优先级）
+2. **按型号自动探测**：启动时查询 [miot-spec.org](https://miot-spec.org) 的设备 spec，定位 `intelligent-speaker` 服务下的 `play-text` 动作（等价于 `python3 -m miservice spec <model>`）
+3. **默认值** `[5, 1]`
+
+**配置示例**（x08c）：
+
+```json
+{
+  "channels": {
+    "migpt": {
+      "speakerControl": "miot",
+      "ttsCommand": [3, 1]
+    }
+  }
+}
+```
+
+**手动查询自己型号的 TTS 动作**：
+
+```bash
+pip install miservice
+python3 -m miservice spec xiaomi.wifispeaker.x08c
+# 在输出中找 intelligent-speaker 服务的 iid（即 siid），
+# 及其下 play-text 动作的 iid（即 aiid）
+```
 
 **特别说明**：当前项目未对所有小爱音箱型号进行全面测试，以上型号支持情况仅供参考。由于小爱音箱型号众多，不同型号可能存在差异，建议用户根据自身设备型号自行编译测试。
 
